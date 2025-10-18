@@ -1,9 +1,10 @@
+import sys
+import os
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List
-import sys
-import os
+from fastapi.middleware.cors import CORSMiddleware
 
 # Add the current directory to path to import modules
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -14,13 +15,20 @@ from llm.client import OpenRouterClient, OpenRouterError
 from utils.noun_extractor import extract_keywords
 
 # Create database tables if they don't exist (skip during testing)
-import os
-
 if not os.getenv("PYTEST_CURRENT_TEST"):
     Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Jouster Backend API", description="Text analysis API using OpenRouter"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific domains
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -49,7 +57,6 @@ def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
         # Get analysis from OpenRouter
         ai_response = openrouter_client.analyze_text(request.text)
 
-        # Extract keywords (3 most frequent nouns)
         keywords = extract_keywords(request.text, top_n=3)
 
         # Convert list to comma-separated string for storage
@@ -96,12 +103,7 @@ def search_records(topic: str, db: Session = Depends(get_db)):
         )
 
     try:
-        # Search for records where the topics string contains the specified topic (case-insensitive)
-        # Using PostgreSQL LIKE with comma delimiter for partial matching
         search_topic = topic.lower()
-
-        # Use LIKE with % wildcards to match the topic anywhere in the comma-separated string
-        # We add commas around the search term to ensure we match complete topics, not substrings of other topics
         records = (
             db.query(AnalysisRecord)
             .filter(AnalysisRecord.topics.ilike(f"%{search_topic}%"))
@@ -120,7 +122,6 @@ def search_records(topic: str, db: Session = Depends(get_db)):
                     "keywords": record.keywords,
                 }
             )
-
         return result
     except Exception as e:
         raise HTTPException(
@@ -133,10 +134,8 @@ def list_all_records(db: Session = Depends(get_db)):
     try:
         records = db.query(AnalysisRecord).all()
 
-        # Convert topics and keywords from strings back to lists for response
         result = []
         for record in records:
-
             result.append(
                 {
                     "id": record.id,
@@ -147,7 +146,6 @@ def list_all_records(db: Session = Depends(get_db)):
                     "keywords": record.keywords,
                 }
             )
-
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing records: {str(e)}")

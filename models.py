@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
-from pydantic import BaseModel
-from typing import List, Optional
 
 Base = declarative_base()
 
@@ -18,15 +16,3 @@ class AnalysisRecord(Base):
     )  # USe string instead of Array just for simple usage case for this demo
     sentiment = Column(String, nullable=True)  # positive, neutral, negative
     keywords = Column(String, nullable=False, default="")
-
-
-class AnalysisRecordCreate(BaseModel):
-    title: Optional[str] = None
-    topics: List[str]
-    sentiment: Optional[str] = None
-    keywords: List[str]
-
-
-class AnalysisRecordResponse(AnalysisRecordCreate):
-    id: int
-    created_date: str
