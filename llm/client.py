@@ -101,28 +101,15 @@ class OpenRouterClient:
                 json_str = response_text[json_start:json_end]
                 data = json.loads(json_str)
 
-                # Ensure topics is a list of 3 strings
-                topics = data.get("topics", [])
-                if len(topics) < 3:
-                    topics.extend([""] * (3 - len(topics)))
-                elif len(topics) > 3:
-                    topics = topics[:3]
-
                 return OpenRouterResponse(
                     summary=data.get("summary", ""),
                     title=data.get("title", None),
-                    topics=topics,
+                    topics=data.get("topics", []),
                     sentiment=data.get("sentiment", "neutral"),
                 )
             else:
                 logger.warning(f"No JSON found in OpenRouter response: {response_text}")
-                # If no JSON found, return default response with proper structure
-                return OpenRouterResponse(
-                    summary="Summary could not be generated",
-                    title=None,
-                    topics=["topic1", "topic2", "topic3"],
-                    sentiment="neutral",
-                )
+                raise OpenRouterError("No JSON found in OpenRouter response")
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Network error calling OpenRouter API: {str(e)}")
