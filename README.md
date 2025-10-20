@@ -2,7 +2,8 @@
 
 A FastAPI application for text analysis using OpenRouter LLM. Accepts unstructured text, analyzes it, extracts insights, and stores results in PostgreSQL.
 
-**Live Demo:** https://jouster-backend-test.onrender.com
+**Live Demo:** https://codesandbox.io/p/sandbox/9rs7jx
+**Live Backend:** https://jouster-backend-test.onrender.com
 
 ## Quick Start
 
